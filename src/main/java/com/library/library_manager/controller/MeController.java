@@ -6,7 +6,6 @@ import com.library.library_manager.entity.Notification;
 import com.library.library_manager.service.impl.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,7 +42,7 @@ public class MeController {
 
     // 4. Xem đặt trước hiện có
     @GetMapping("/reservations")
-    public ResponseEntity<List<ReservationResponse>> getReservations() {
+    public ResponseEntity<List<ReservationResponseDTO>> getReservations() {
         return ResponseEntity.ok(studentService.getReservations(CURRENT_USER));
     }
 

@@ -1,10 +1,16 @@
 package com.library.library_manager.dto.book;
 
+import com.library.library_manager.dto.category.CategoryRequestDTO;
+import com.library.library_manager.dto.shelf.ShelfRequestDTO;
+import com.library.library_manager.enums.BookCopyStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -19,24 +25,29 @@ public class BookRequestDTO {
     @NotBlank(message = "Author cannot be blank")
     String author;
 
-    // Entity mới chưa có ISBN nhưng Service đang check trùng ISBN,
-    // bạn nên giữ trường này hoặc thêm vào Entity Book sau.
+    @NotNull(message = "Publisher is not null")
+    String publisher;
+
     @NotBlank(message = "ISBN cannot be blank")
     String isbn;
 
     @NotNull(message = "Price is required")
     @Min(value = 0, message = "Price must be greater than or equal to 0")
-    Double price; // THÊM TRƯỜNG NÀY ĐỂ HẾT LỖI getPrice()
-
-    String genre;
+    Double price;
 
     String description;
 
-    @NotNull(message = "Publish year is required")
-    Integer publishYear;
-
-    String shelfLocation;
+    @NotBlank(message = "Book status cannot be blank")
+    String status;
 
     @Min(value = 1, message = "Quantity must be at least 1")
     int quantity;
+
+    Set<CategoryRequestDTO> category;
+
+    Set<ShelfRequestDTO> shelfLocation;
+
+    List<BookRequestDTO> bookCopy;
+
+
 }

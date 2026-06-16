@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "reservation")
-@Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Reservation {
 

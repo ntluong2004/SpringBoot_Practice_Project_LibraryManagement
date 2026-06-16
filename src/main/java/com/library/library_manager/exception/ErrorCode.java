@@ -46,6 +46,12 @@ public enum ErrorCode {
     MAX_BORROW_LIMIT_REACHED(40013, "Student has reached the maximum number of borrowed books.", HttpStatus.BAD_REQUEST),
     STUDENT_HAS_DEBT(40014, "Action denied: Student has outstanding fines/debt.", HttpStatus.BAD_REQUEST),
 
+    LOAN_NOT_FOUND(40409, "Loan not found!", HttpStatus.NOT_FOUND),
+    RESERVATION_NOT_FOUND(40410, "Reservation not found!", HttpStatus.NOT_FOUND),
+    COPY_ALREADY_BORROWED(40015, "Book copy is not available for borrowing.", HttpStatus.BAD_REQUEST),
+    RESERVATION_NOT_PENDING(40016, "Reservation is not in PENDING state.", HttpStatus.BAD_REQUEST),
+    LOAN_ALREADY_CONFIRMED(40017, "Loan has already been confirmed or delivered.", HttpStatus.BAD_REQUEST),
+
     // 500 Internal Server Error
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR)
     ;

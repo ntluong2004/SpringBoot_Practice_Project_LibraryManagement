@@ -43,6 +43,7 @@ public class BookController {
     @DeleteMapping("/{bookId}")
     public ApiResponse<Void> delete(@PathVariable Long bookId) {
         // Logic xóa đầu sách (Cascade sẽ tự xóa bản in chưa sử dụng)
+        bookService.delete(bookId);
         return ApiResponse.<Void>builder().message("Book deleted").build();
     }
 }

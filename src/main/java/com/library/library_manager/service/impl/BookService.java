@@ -5,6 +5,7 @@ import com.library.library_manager.dto.book.BookResponseDTO;
 import com.library.library_manager.dto.book.BookCopyResponseDTO; // Đảm bảo có DTO này
 import com.library.library_manager.entity.Book;
 import com.library.library_manager.entity.BookCopy;
+import com.library.library_manager.enums.BookCopyStatus;
 import com.library.library_manager.exception.AppException;
 import com.library.library_manager.exception.ErrorCode;
 import com.library.library_manager.repository.IBookCopyRepository;
@@ -65,11 +66,11 @@ public class BookService implements IBookService {
         for (int i = 0; i < request.getQuantity(); i++) {
             BookCopy copy = new BookCopy();
             copy.setBook(savedBook);
-            copy.setStatus("AVAILABLE");
+            copy.setStatus(BookCopyStatus.AVAILABLE);
 
             // SỬA TẠI ĐÂY: Gán giá trị cho barcode để không bị lỗi NOT NULL
             // Ví dụ: BC-ID-ThờiGian-SốThứTự
-            String generatedBarcode = "BC-" + savedBook.getId() + "-" + System.currentTimeMillis() + "-" + i;
+            String generatedBarcode = "BC-" + savedBook.getBookId() + "-" + System.currentTimeMillis() + "-" + i;
             copy.setBarcode(generatedBarcode);
 
             // Nếu Entity BookCopy có trường entryDate, hãy set luôn
@@ -103,7 +104,7 @@ public class BookService implements IBookService {
 
         // Kiểm tra xem có bản in nào đang bị mượn không
         boolean hasActiveLoans = book.getBookCopies().stream()
-                .anyMatch(copy -> !copy.getStatus().equals("AVAILABLE"));
+                .anyMatch(copy -> !copy.getStatus().equals(BookCopyStatus.AVAILABLE));
 
         if (hasActiveLoans) {
             throw new AppException(ErrorCode.CANNOT_DELETE_BOOK);
@@ -131,10 +132,10 @@ public class BookService implements IBookService {
             for (int i = 0; i < adjustment; i++) {
                 BookCopy copy = new BookCopy();
                 copy.setBook(book);
-                copy.setStatus("AVAILABLE");
+                copy.setStatus(BookCopyStatus.AVAILABLE);
 
                 // SINH BARCODE TỰ ĐỘNG ĐỂ TRÁNH LỖI NULL
-                String generatedBarcode = "BC-" + book.getId() + "-" + System.currentTimeMillis() + "-" + i;
+                String generatedBarcode = "BC-" + book.getBookId() + "-" + System.currentTimeMillis() + "-" + i;
                 copy.setBarcode(generatedBarcode);
 
                 // Nếu DB có cột entry_date NOT NULL, hãy gán ngày hiện tại
@@ -144,7 +145,7 @@ public class BookService implements IBookService {
             }
         } else if (adjustment < 0) {
             // Logic xóa bản in (giữ nguyên như cũ)
-            List<BookCopy> availableCopies = bookCopyRepository.findByBookAndStatus(book, "AVAILABLE");
+            List<BookCopy> availableCopies = bookCopyRepository.findByBookAndStatus(book, BookCopyStatus.AVAILABLE);
             if (availableCopies.size() < Math.abs(adjustment)) {
                 throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
             }
@@ -157,7 +158,7 @@ public class BookService implements IBookService {
     // Hàm chuyển đổi sang DTO để tránh lộ Entity và lỗi đệ quy
     private BookResponseDTO mapToResponseDTO(Book book) {
         return BookResponseDTO.builder()
-                .bookId(book.getId())
+                .id(book.getBookId())
                 .title(book.getTitle())
                 .author(book.getAuthor())
                 .price(book.getPrice())

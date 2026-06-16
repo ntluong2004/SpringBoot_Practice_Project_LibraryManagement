@@ -6,6 +6,8 @@ import com.library.library_manager.service.IBookCopyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import com.library.library_manager.enums.BookCopyStatus;
+
 import java.util.List;
 
 @RestController
@@ -19,7 +21,7 @@ public class BookCopyController {
     @GetMapping
     public ApiResponse<List<BookCopyResponseDTO>> getCopies(
             @RequestParam Long bookId,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) BookCopyStatus status) {
         return ApiResponse.<List<BookCopyResponseDTO>>builder()
                 .data(bookCopyService.getByBookId(bookId, status))
                 .build();
@@ -37,7 +39,7 @@ public class BookCopyController {
     @PatchMapping("/{copyId}/circulation-status")
     public ApiResponse<BookCopyResponseDTO> updateStatus(
             @PathVariable Long copyId,
-            @RequestParam String status) {
+            @RequestParam BookCopyStatus status) {
         return ApiResponse.<BookCopyResponseDTO>builder()
                 .data(bookCopyService.updateCirculationStatus(copyId, status))
                 .build();

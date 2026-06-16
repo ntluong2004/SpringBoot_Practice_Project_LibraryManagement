@@ -21,28 +21,15 @@ public class Book {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "book_id")
-        Long id;
+        private Long bookId; // Đặt tên là bookId cho đúng chuẩn CamelCase
 
-        @Column(name = "title", nullable = false, length = 255)
-        String title;
-
-        @Column(name = "author", length = 150)
-        String author;
-
-        @Column(name = "publisher", length = 255) // Mới thêm
-        String publisher;
-
-        @Column(name = "isbn", length = 50)      // Mới thêm
-        String isbn;
-
-        @Column(name = "price")
-        Double price;
-
-        @Column(name = "description", columnDefinition = "TEXT")
-        String description;
-
-        @Column(name = "status", length = 50)    // Mới thêm
-        String status;
+        private String title;
+        private String author;
+        private String publisher;
+        private String isbn;
+        private Double price;
+        private String description;
+        private String status;
 
         // Quan hệ n-n với Category
         @ManyToMany
@@ -54,7 +41,7 @@ public class Book {
         @Builder.Default
         Set<Category> categories = new HashSet<>();
 
-        // Quan hệ n-n với Shelves
+        // Quan hệ n-n với Shelf
         @ManyToMany
         @JoinTable(
                 name = "book_shelf",
@@ -62,7 +49,7 @@ public class Book {
                 inverseJoinColumns = @JoinColumn(name = "shelf_id")
         )
         @Builder.Default
-        Set<Shelf> shelves = new HashSet<>();
+        Set<Shelf> shelfLocation = new HashSet<>();
 
         @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
         @Builder.Default

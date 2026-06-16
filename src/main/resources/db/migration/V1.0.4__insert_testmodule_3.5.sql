@@ -5,7 +5,11 @@ INSERT INTO book (title, author, publisher, isbn, status) VALUES
 
 -- 2. Chèn bản sao sách để test Đặt trước (Reservation)
 -- (Sử dụng book_id 1 và 2 vừa tạo ở trên)
-INSERT INTO book_copy (barcode, status, book_id) VALUES
-                                                     ('BC001', 'Available', (SELECT book_id FROM book WHERE isbn = '978-604-123456')),
-                                                     ('BC002', 'Available', (SELECT book_id FROM book WHERE isbn = '978-604-123456')),
-                                                     ('BC003', 'Available', (SELECT book_id FROM book WHERE isbn = '978-604-987654'));
+INSERT INTO book_copy (barcode, status, book_id)
+SELECT 'BC001', 'Available', book_id FROM book WHERE isbn = '978-604-123456';
+
+INSERT INTO book_copy (barcode, status, book_id)
+SELECT 'BC002', 'Available', book_id FROM book WHERE isbn = '978-604-123456';
+
+INSERT INTO book_copy (barcode, status, book_id)
+SELECT 'BC003', 'Available', book_id FROM book WHERE isbn = '978-604-987654';

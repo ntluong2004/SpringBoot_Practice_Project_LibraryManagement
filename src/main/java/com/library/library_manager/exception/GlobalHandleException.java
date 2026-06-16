@@ -19,6 +19,7 @@ public class GlobalHandleException {
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Object>> handleAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
+        exception.printStackTrace();
         return ResponseEntity.status(errorCode.getStatus()).body(
                 ApiResponse.builder()
                         .code(errorCode.getCode())
@@ -47,6 +48,7 @@ public class GlobalHandleException {
     // Bắt các lỗi Runtime khác không mong muốn
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException exception) {
+        exception.printStackTrace();
         return ResponseEntity.internalServerError().body(
                 ApiResponse.builder()
                         .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())

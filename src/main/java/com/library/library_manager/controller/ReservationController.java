@@ -1,9 +1,13 @@
 package com.library.library_manager.controller;
 
+import com.library.library_manager.dto.ApiResponse;
+import com.library.library_manager.dto.LoanResponseDTO;
 import com.library.library_manager.dto.ReservationRequestDTO;
-import com.library.library_manager.dto.ReservationResponse;
+import com.library.library_manager.dto.ReservationResponseDTO;
+import com.library.library_manager.service.impl.LoanService;
 import com.library.library_manager.service.impl.StudentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,31 +19,51 @@ import java.util.List;
 public class ReservationController {
 
     private final StudentService studentService;
+    private final LoanService loanService;
     private final String CURRENT_USER = "SV001";
 
-    // 1. Tạo yêu cầu đặt trước (Sử dụng ReservationRequestDTO)
+    // ── Sinh viên: Tạo đặt trước online
     @PostMapping
-    public ResponseEntity<ReservationResponse> create(@RequestBody ReservationRequestDTO dto) {
+    public ResponseEntity<ReservationResponseDTO> create(@RequestBody ReservationRequestDTO dto) {
         return ResponseEntity.ok(studentService.createReservation(dto, CURRENT_USER));
     }
 
-    // 2. Xem danh sách đặt trước
+    // ── Sinh viên: Xem danh sách đặt trước của mình
     @GetMapping
-    public ResponseEntity<List<ReservationResponse>> getAll() {
-        // Tận dụng hàm getReservations đã viết ở module 3.4
+    public ResponseEntity<List<ReservationResponseDTO>> getAll() {
         return ResponseEntity.ok(studentService.getReservations(CURRENT_USER));
     }
 
-    // 3. Xem chi tiết một yêu cầu đặt trước
+    // ── Sinh viên: Xem chi tiết một đặt trước
     @GetMapping("/{reservationId}")
-    public ResponseEntity<ReservationResponse> getDetail(@PathVariable Long reservationId) {
+    public ResponseEntity<ReservationResponseDTO> getDetail(@PathVariable Long reservationId) {
         return ResponseEntity.ok(studentService.getReservationDetail(reservationId, CURRENT_USER));
     }
 
-    // 4. Hủy đặt trước
-    @DeleteMapping("/{reservationId}")
-    public ResponseEntity<String> cancel(@PathVariable Long reservationId) {
+    // ── Sinh viên: Hủy đặt trước online (chưa đến quầy)
+    @DeleteMapping("/{reservationId}/cancel")
+    public ResponseEntity<String> cancelByStudent(@PathVariable Long reservationId) {
         studentService.cancelReservation(reservationId, CURRENT_USER);
         return ResponseEntity.ok("Hủy đặt trước thành công.");
+    }
+
+    // ── Thủ thư: Xác nhận sinh viên đến nhận sách đã đặt → tạo phiếu mượn
+    @PostMapping("/{reservationId}/confirm-pickup")
+    public ResponseEntity<ApiResponse<LoanResponseDTO>> confirmPickup(@PathVariable Long reservationId) {
+        LoanResponseDTO loan = loanService.confirmPickupFromReservation(reservationId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.<LoanResponseDTO>builder()
+                        .message("Xác nhận đơn đặt trước thành công. Phiếu mượn đã được tạo.")
+                        .data(loan)
+                        .build());
+    }
+
+    // ── Thủ thư: Hủy đặt trước tại quầy (sinh viên từ chối nhận)
+    @DeleteMapping("/{reservationId}")
+    public ResponseEntity<ApiResponse<Void>> cancelAtCounter(@PathVariable Long reservationId) {
+        loanService.cancelReservationAtCounter(reservationId);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Đã hủy đơn đặt trước và giải phóng bản in.")
+                .build());
     }
 }

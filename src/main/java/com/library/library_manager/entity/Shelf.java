@@ -1,6 +1,7 @@
 package com.library.library_manager.entity;
 
 
+import com.library.library_manager.dto.book.BookCopyResponseDTO;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -32,6 +33,8 @@ public class Shelf {
     @Column(name = "floor_level")
     Integer floorLevel; // Tầng số mấy
 
-    @ManyToMany(mappedBy = "shelves")
-    Set<Book> books = new HashSet<>();
+    //    @ManyToMany(mappedBy = "shelfLocation")
+//    Set<Book> books = new HashSet<>();
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    BookCopy bookCopy;
 }

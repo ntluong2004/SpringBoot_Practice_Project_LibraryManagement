@@ -1,8 +1,11 @@
 package com.library.library_manager.dto.book;
 
+import com.library.library_manager.dto.shelf.ShelfResponseDTO;
+import com.library.library_manager.entity.Shelf;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -10,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookResponseDTO {
-    Long bookId;
+    Long id;
     String title;
     String author;
     String isbn;
@@ -18,7 +21,7 @@ public class BookResponseDTO {
     Double price;
     String description;
     Integer publishYear;
-    String shelfLocation;
+    Set<Shelf> shelfLocation;
 
     // Trả về danh sách bản in tối giản
     List<BookCopyResponseDTO> copies;

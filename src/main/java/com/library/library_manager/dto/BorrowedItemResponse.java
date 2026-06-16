@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class BorrowedItemResponse {
     private String bookTitle;
     private LocalDateTime borrowDate;

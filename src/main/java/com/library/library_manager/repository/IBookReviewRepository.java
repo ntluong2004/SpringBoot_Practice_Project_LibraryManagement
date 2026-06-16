@@ -8,9 +8,8 @@ import java.util.List;
 
 @Repository
 public interface IBookReviewRepository extends JpaRepository<BookReview, Long> {
-    // Lấy danh sách đánh giá của một đầu sách
-    List<BookReview> findByBook_IdOrderByCreatedAtDesc(Long bookId);
 
-    // Kiểm tra xem sinh viên đã đánh giá cuốn sách này chưa (để tránh đánh giá nhiều lần)
-    boolean existsByBook_IdAndStudent_User_UserName(Long bookId, String username);
+    List<BookReview> findByBookBookIdOrderByCreatedAtDesc(Long bookId);
+
+    boolean existsByBookBookIdAndStudent_User_UserName(Long bookId, String username);
 }

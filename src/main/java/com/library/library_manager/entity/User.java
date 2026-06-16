@@ -16,7 +16,6 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "user")
-@Data
 public class User {
 
     @Id
@@ -50,4 +49,7 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     List<Incident> reportedIncidents;
+
+    @OneToOne(mappedBy = "user") // "user" là tên biến User trong class Student
+    private Student student;
 }

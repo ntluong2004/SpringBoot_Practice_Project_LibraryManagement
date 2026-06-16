@@ -12,7 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.library.library_manager.enums.BookCopyStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,13 +37,13 @@ public class BookCopyService implements IBookCopyService {
     }
 
     @Override
-    public List<BookCopyResponseDTO> getByBookId(Long bookId, String status) {
+    public List<BookCopyResponseDTO> getByBookId(Long bookId, BookCopyStatus status) {
         // Nếu có status thì lọc theo status, không thì lấy hết của đầu sách đó
         List<BookCopy> copies;
-        if (status != null && !status.isEmpty()) {
-            copies = bookCopyRepository.findByBookIdAndStatus(bookId, status);
+        if (status != null) {
+            copies = bookCopyRepository.findByBookBookIdAndStatus(bookId, status);
         } else {
-            copies = bookCopyRepository.findByBookId(bookId);
+            copies = bookCopyRepository.findByBookBookId(bookId);
         }
         return copies.stream().map(this::mapToResponseDTO).toList();
     }
@@ -54,12 +57,12 @@ public class BookCopyService implements IBookCopyService {
 
     @Override
     @Transactional
-    public BookCopyResponseDTO updateCirculationStatus(Long id, String newStatus) {
+    public BookCopyResponseDTO updateCirculationStatus(Long id, BookCopyStatus newStatus) {
         BookCopy copy = bookCopyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COPY_NOT_FOUND));
 
         // Kiểm tra logic: Nếu đang BORROWED thì không cho phép chuyển sang LOST/DAMAGED trực tiếp
-        // trừ khi xử lý qua luồng trả sách (tùy nghiệp vụ của bạn)
+        // trừ khi xử lý qua luồng trả sách
         copy.setStatus(newStatus);
         return mapToResponseDTO(bookCopyRepository.save(copy));
     }
@@ -71,7 +74,7 @@ public class BookCopyService implements IBookCopyService {
                 .orElseThrow(() -> new AppException(ErrorCode.COPY_NOT_FOUND));
 
         // Không cho phép xóa nếu sách đang được mượn
-        if ("BORROWED".equals(copy.getStatus())) {
+        if (BookCopyStatus.BORROWED.equals(copy.getStatus())) {
             throw new AppException(ErrorCode.CANNOT_DELETE_BORROWED_COPY);
         }
 
@@ -83,7 +86,7 @@ public class BookCopyService implements IBookCopyService {
                 .id(copy.getId())
                 .barcode(copy.getBarcode())
                 .status(copy.getStatus())
-                .shelfLocation(copy.getShelfLocation())
+                .shelf(copy.getShelf())
                 .bookTitle(copy.getBook().getTitle())
                 .build();
     }

@@ -1,6 +1,7 @@
 package com.library.library_manager.repository;
 
 import com.library.library_manager.entity.Student;
+import com.library.library_manager.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,6 +32,6 @@ public interface IStudentRepository extends JpaRepository<Student, Long> {
     // 4. Tìm kiếm theo Username của bảng User (thông qua mối quan hệ @OneToOne)
     Optional<Student> findByUser_UserName(String userName);
 
-
+    Optional<Student> findByUser(User user);
 
 }

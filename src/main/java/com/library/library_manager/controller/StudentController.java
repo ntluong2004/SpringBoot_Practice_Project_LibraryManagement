@@ -2,6 +2,7 @@ package com.library.library_manager.controller;
 
 import com.library.library_manager.dto.ApiResponse;
 import com.library.library_manager.dto.BorrowHistoryDTO;
+import com.library.library_manager.dto.BorrowSessionResponseDTO;
 import com.library.library_manager.dto.PasswordResetRequest;
 import com.library.library_manager.dto.ViolationDTO;
 import com.library.library_manager.dto.student.StudentProfileResponseDTO;
@@ -11,6 +12,8 @@ import com.library.library_manager.entity.Student;
 import com.library.library_manager.entity.User;
 import com.library.library_manager.repository.IStudentRepository;
 import com.library.library_manager.service.IStudentService;
+import com.library.library_manager.service.IFineService;
+import com.library.library_manager.service.impl.LoanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,8 @@ import java.util.List;
 public class StudentController {
     private final IStudentService studentService;
     private final IStudentRepository studentRepository;
+    private final LoanService loanService;
+    private final IFineService fineService;
 
     @PostMapping
     public ApiResponse<StudentResponseDTO> create(@RequestBody @Valid StudentRequestDTO request) {
@@ -57,6 +62,21 @@ public class StudentController {
 
     }
 
+    /**
+     * GET /api/students/{studentId}/borrow-session
+     * Khi quét thẻ sinh viên, trả về tình trạng tổng quát:
+     * - danh sách đơn đặt trước đang chờ (PENDING)
+     * - sách đang mượn (chưa trả)
+     * - công nợ và hạn mức còn lại
+     */
+    @GetMapping("/{studentId}/borrow-session")
+    public ResponseEntity<ApiResponse<BorrowSessionResponseDTO>> getBorrowSession(
+            @PathVariable Long studentId) {
+        return ResponseEntity.ok(ApiResponse.<BorrowSessionResponseDTO>builder()
+                .data(loanService.getBorrowSessionByStudentId(studentId))
+                .build());
+    }
+
     // 7. Xem lịch sử mượn trả
     @GetMapping("/{studentId}/borrow-history")
     public ResponseEntity<List<BorrowHistoryDTO>> getBorrowHistory(@PathVariable Long studentId) {
@@ -84,5 +104,12 @@ public class StudentController {
                 student.getMajor(),
                 student.getStatus()
         );
+    }
+
+    @GetMapping("/{studentId}/fine-balance")
+    public ApiResponse<com.library.library_manager.dto.fine.FineBalanceResponseDTO> getFineBalance(@PathVariable Long studentId) {
+        return ApiResponse.<com.library.library_manager.dto.fine.FineBalanceResponseDTO>builder()
+                .data(fineService.getStudentFineBalance(studentId))
+                .build();
     }
 }

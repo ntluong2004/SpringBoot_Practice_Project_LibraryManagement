@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -32,4 +34,20 @@ public class Violation {
         @ManyToOne
         @JoinColumn(name = "loan_id")
         Loan loan;
+
+        @ManyToOne
+        @JoinColumn(name = "student_id")
+        Student student;
+
+        @Column(name = "notes")
+        String notes;
+
+        @Column(name = "created_at")
+        LocalDateTime createdAt = LocalDateTime.now();
+
+        @Column(name = "due_date")
+        LocalDateTime dueDate;
+
+        @Column(name = "status", length = 50)
+        String status = "UNPAID"; // UNPAID, PARTIAL, PAID, CANCELLED
 }

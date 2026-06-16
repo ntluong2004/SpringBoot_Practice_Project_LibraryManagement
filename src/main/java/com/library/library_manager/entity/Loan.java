@@ -48,4 +48,7 @@ public class Loan {
         @ManyToOne
         @JoinColumn(name = "staff_id")
         Staff staff;
+
+        @OneToOne(mappedBy = "loan")
+        private Reservation reservation;
 }

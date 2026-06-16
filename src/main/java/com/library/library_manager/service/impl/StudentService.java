@@ -6,8 +6,11 @@ import com.library.library_manager.dto.student.StudentProfileResponseDTO;
 import com.library.library_manager.dto.student.StudentRequestDTO;
 import com.library.library_manager.dto.student.StudentResponseDTO;
 import com.library.library_manager.entity.*;
+import com.library.library_manager.enums.BookCopyStatus;
 import com.library.library_manager.exception.AppException;
 import com.library.library_manager.exception.ErrorCode;
+import com.library.library_manager.mapper.LoanMapper;
+import com.library.library_manager.mapper.StudentMapper;
 import com.library.library_manager.repository.*;
 import com.library.library_manager.service.IStudentService;
 import jakarta.transaction.Transactional;
@@ -51,18 +54,21 @@ public class StudentService implements IStudentService {
     final IBookCopyRepository bookCopyRepository;
     private final IBookRepository bookRepository;
 
+    final StudentMapper studentMapper;
+    final LoanMapper loanMapper;
+
     @Override
     public PageResponse<StudentResponseDTO> getAll(int page, int size, String studentCode, String status) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
         Page<Student> studentPage = studentRepository.findAllWithFilters(studentCode, status, pageable);
-        Page<StudentResponseDTO> responsePage = studentPage.map(this::mapToResponse);
+        Page<StudentResponseDTO> responsePage = studentPage.map(studentMapper::studentToStudentResponseDTO);
         return new PageResponse<>(responsePage);
     }
 
     @Override
     public StudentResponseDTO getById(Long id) {
         return studentRepository.findById(id)
-                .map(this::mapToResponse)
+                .map(studentMapper::studentToStudentResponseDTO)
                 .orElseThrow(() -> new AppException(ErrorCode.STUDENT_NOT_FOUND));
     }
 
@@ -101,7 +107,7 @@ public class StudentService implements IStudentService {
                 .totalDebt(0.0)
                 .build();
 
-        return mapToResponse(studentRepository.save(student));
+        return studentMapper.studentToStudentResponseDTO(studentRepository.save(student));
     }
 
     @Override
@@ -119,7 +125,7 @@ public class StudentService implements IStudentService {
         user.setPhoneNumber(request.getPhoneNumber());
         userRepository.save(user);
 
-        return mapToResponse(studentRepository.save(student));
+        return studentMapper.studentToStudentResponseDTO(studentRepository.save(student));
     }
 
     @Override
@@ -160,19 +166,9 @@ public class StudentService implements IStudentService {
         return Collections.emptyList();
     }
 
-    // 1. Xem hồ sơ cá nhân
+    // 1. Xem hồ sơ cá nhân (delegate sang StudentMapper)
     private StudentResponseDTO mapToResponse(Student student) {
-        return StudentResponseDTO.builder()
-                .id(student.getId())
-                .studentCode(student.getStudentCode())
-                .fullName(student.getUser().getFullName())
-                .email(student.getUser().getEmail())
-                .phoneNumber(student.getUser().getPhoneNumber())
-                .major(student.getMajor())
-                .clazz(student.getClazz())
-                .status(student.getStatus())
-                .balance(student.getTotalDebt())
-                .build();
+        return studentMapper.studentToStudentResponseDTO(student);
     }
 
     public StudentProfileResponseDTO getProfileByUsername(String username) {
@@ -186,25 +182,25 @@ public class StudentService implements IStudentService {
 
         // 3. Chuyển đổi sang DTO để trả về cho Controller
         // Đảm bảo thứ tự tham số khớp với Constructor trong StudentProfileResponse của bạn
-        return new StudentProfileResponseDTO(
-                user.getFullName(),
-                student.getStudentCode(),
-                user.getEmail(),
-                user.getPhoneNumber(),
-                student.getClazz(),
-                student.getMajor(),
-                student.getStatus()
-        );
+        return studentMapper.studentToStudentProfileResponseDTO(student);
     }
 
     // 2. Xem sách đang mượn
     public List<BorrowedItemResponse> getBorrowedItems(String username) {
         return loanRepository.findByUser_UserNameAndReturnedAtIsNull(username).stream()
                 .map(loan -> {
+                    // Sửa dòng 192: Chuyển LocalDateTime sang LocalDate an toàn
                     long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), loan.getDueDate().toLocalDate());
+
                     String status = (daysLeft < 0) ? "QUÁ HẠN" : (daysLeft <= 3 ? "SẮP ĐẾN HẠN" : "ĐANG MƯỢN");
-                    return new BorrowedItemResponse(loan.getBookCopy().getBook().getTitle(),
-                            loan.getBorrowDate(), loan.getDueDate(), status);
+
+                    // Sử dụng Builder pattern để tránh lỗi constructor không khớp tham số
+                    return BorrowedItemResponse.builder()
+                            .bookTitle(loan.getBookCopy().getBook().getTitle())
+                            .borrowDate(loan.getBorrowDate())
+                            .dueDate(loan.getDueDate())
+                            .status(status)
+                            .build();
                 }).collect(Collectors.toList());
     }
 
@@ -225,15 +221,10 @@ public class StudentService implements IStudentService {
     }
 
     // Xem đặt trước
-    public List<ReservationResponse> getReservations(String username) {
-        // Gọi đúng tên hàm dài hơn một chút nhưng cực kỳ chính xác
-        return reservationRepository.findByStudent_User_UserNameOrderByRequestDateDesc(username).stream()
-                .map(r -> new ReservationResponse(
-                        r.getBook().getTitle(),
-                        r.getRequestDate(), // Trong Entity bạn đặt là requestDate chứ không phải createdAt
-                        r.getStatus()
-                ))
-                .collect(Collectors.toList());
+    public List<ReservationResponseDTO> getReservations(String username) {
+        return loanMapper.toReservationResponseList(
+                reservationRepository.findByStudent_User_UserNameOrderByRequestDateDesc(username)
+        );
     }
 
     // Tổng tiền phạt cần đóng
@@ -302,7 +293,7 @@ public class StudentService implements IStudentService {
     }
 
     @Transactional
-    public ReservationResponse createReservation(ReservationRequestDTO dto, String username) {
+    public ReservationResponseDTO createReservation(ReservationRequestDTO dto, String username) {
         // 1. Kiểm tra hạn mức (Ví dụ: Tổng mượn + đặt không quá 5)
         long currentLoans = loanRepository.countByUser_UserNameAndReturnedAtIsNull(username);
         long currentRes = reservationRepository.countByStudent_User_UserNameAndStatus(username, "Đang giữ");
@@ -329,7 +320,7 @@ public class StudentService implements IStudentService {
 
         reservationRepository.save(res);
 
-        return new ReservationResponse(copy.getBook().getTitle(), res.getRequestDate(), res.getStatus());
+        return loanMapper.reservationToReservationResponseDTO(reservationRepository.save(res));
     }
 
     // API Hủy đặt trước
@@ -364,7 +355,7 @@ public class StudentService implements IStudentService {
         bookReviewRepository.save(review);
     }
 
-    public ReservationResponse getReservationDetail(Long id, String username) {
+    public ReservationResponseDTO getReservationDetail(Long id, String username) {
         Reservation res = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu đặt trước"));
 
@@ -373,6 +364,7 @@ public class StudentService implements IStudentService {
             throw new RuntimeException("Bạn không có quyền xem chi tiết yêu cầu này");
         }
 
-        return new ReservationResponse(res.getBook().getTitle(), res.getRequestDate(), res.getStatus());
+
+        return loanMapper.reservationToReservationResponseDTO(res);
     }
 }
